@@ -2,7 +2,7 @@
 ## Please, note that this will override the image parameters, including dependencies, configured to use the global value
 ## Current available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass
 ##
-# global:
+global: {}
 #   imageRegistry: myRegistryName
 #   imagePullSecrets:
 #     - myRegistryKeySecretName
@@ -14,7 +14,7 @@
 image:
   registry: docker.io
   repository: bitnami/kibana
-  tag: 7.3.2-debian-9-r7
+  tag: 7.3.2-debian-9-r9
   pullPolicy: IfNotPresent
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -57,10 +57,12 @@ updateStrategy:
 # schedulerName:
 
 ## List of plugins to install
+##
 plugins:
   # - https://github.com/fbaligand/kibana-enhanced-table/releases/download/v1.5.0/enhanced-table-1.5.0_7.3.2.zip
 
 ## Saved objects to import (NDJSON format)
+##
 savedObjects:
   ## List of saved objects URLs
   urls:
@@ -69,9 +71,11 @@ savedObjects:
   configmap:
 
 ## Extra configuration settings
+##
 # extraConfiguration:
 
-## Configuration ConfigMap
+## Configuration ConfigMap (for kibana.yml)
+##
 # configurationCM:
 
 ## An array to add extra env vars
@@ -82,16 +86,20 @@ savedObjects:
 ##
 # extraEnvVars:
 
-## An array to add extra configmaps:
-## For example:
+## Array to add extra configmaps:
+##
 ## extraEnvVarsCM:
 
-## An array to add extra configmaps:
-## For example:
+## Array to add extra configmaps:
+##
 ## extraEnvVarsSecret:
 
-## extraVolumes: {}
+## Array to add extra volumes
+##
+## extraVolumes:
 
+## Array to add extra mounts (normally used with extraVolumes)
+##
 ## extraVolumeMounts: {}
 
 ##
@@ -142,12 +150,14 @@ persistence:
 ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
 ##
 livenessProbe:
+  enabled: true
   initialDelaySeconds: 120
   periodSeconds: 10
   timeoutSeconds: 5
   failureThreshold: 6
   successThreshold: 1
 readinessProbe:
+  enabled: true
   initialDelaySeconds: 30
   periodSeconds: 10
   timeoutSeconds: 5
@@ -155,12 +165,15 @@ readinessProbe:
   successThreshold: 1
 
 ## Force execution of init scripts
+##
 forceInitScripts: false
 
 ## Configmap with init scripts to execute
+##
 # initScriptsCM:
 
 ## Secret with init scripts to execute (for sensitive data)
+##
 # initScriptsSecret:
 
 ## Service configuration
@@ -261,8 +274,9 @@ affinity: {}
 ##
 podAnnotations: {}
 
+## Add sidecars to the pod
+##
 sidecars:
-## Add sidecars to the pod.
 ## e.g.
 # - name: your-image-name
   # image: your-image
@@ -271,8 +285,9 @@ sidecars:
   # - name: portname
   #   containerPort: 1234
 
+## Add init containers to the pod
+##
 initContainers:
-## Add init containers to the pod.
 ## e.g.
 # - name: your-image-name
   # image: your-image
@@ -281,30 +296,11 @@ initContainers:
   # - name: portname
   #   containerPort: 1234
 
-## Prometheus Exporter / Metrics
+
+## Prometheus metrics (requires the kibana-prometheus-exporter plugin)
 ##
 metrics:
   enabled: true
-  podAnnotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/port: "9112"
-
-  ## Metrics exporter resource requests and limits
-  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-  ##
-  # resources: {}
-
-  ## Metrics exporter labels and tolerations for pod assignment
-  # nodeSelector: {"beta.kubernetes.io/arch": "amd64"}
-  # tolerations: []
-
-  ## Metrics exporter pod Annotation and Labels
-  # podAnnotations: {}
-  # podLabels: {}
-
-
-metrics:
-  enabled: false
   service:
     annotations:
       prometheus.io/scrape: "true"
@@ -312,9 +308,10 @@ metrics:
       prometheus.io/path: "_prometheus/metrics"
 
 ## Properties for Elasticsearch
+##
 elasticsearch:
-  useBundled: false
-  ## Properties when useBundled is false
+  enabled: false
+  ## Properties when enabled is false
   external:
     hosts:
     # - elasticsearch-1
