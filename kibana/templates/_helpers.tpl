@@ -7,37 +7,46 @@ Expand the name of the chart.
 {{- end -}}
 
 {{/*
+Create a default fully qualified app name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
+*/}}
+{{- define "kibana.fullname" -}}
+{{- if .Values.fullnameOverride -}}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- if contains $name .Release.Name -}}
+{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Create a default fully qualified elasticsearch name.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+*/}}
+{{- define "kibana.elasticsearch.fullname" -}}
+{{- if .Values.elasticsearch.fullnameOverride -}}
+{{- .Values.elasticsearch.fullnameOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- $name := default "elasticsearch" .Values.elasticsearch.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the proper Docker Image Registry Secret Names
 */}}
 {{- define "kibana.imagePullSecrets" -}}
-{{/*
-Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
-but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
-Also, we can not use a single if because lazy evaluation is not an option
-*/}}
-{{- if .Values.global }}
-{{- if .Values.global.imagePullSecrets }}
+{{- $imagePullSecrets := coalesce .Values.global.imagePullSecrets .Values.image.pullSecrets .Values.volumePermissions.image.pullSecrets -}}
+{{- if $imagePullSecrets }}
 imagePullSecrets:
-{{- range .Values.global.imagePullSecrets }}
+{{- range $imagePullSecrets }}
   - name: {{ . }}
-{{- end }}
-{{- else if or .Values.image.pullSecrets .Values.volumePermissions.image.pullSecrets }}
-imagePullSecrets:
-{{- range .Values.image.pullSecrets }}
-  - name: {{ . }}
-{{- end }}
-{{- range .Values.volumePermissions.image.pullSecrets }}
-  - name: {{ . }}
-{{- end }}
 {{- end -}}
-{{- else if or .Values.image.pullSecrets .Values.volumePermissions.image.pullSecrets }}
-imagePullSecrets:
-{{- range .Values.image.pullSecrets }}
-  - name: {{ . }}
-{{- end }}
-{{- range .Values.volumePermissions.image.pullSecrets }}
-  - name: {{ . }}
-{{- end }}
 {{- end -}}
 {{- end -}}
 
@@ -74,37 +83,6 @@ Also, we can't use a single if because lazy evaluation is not an option
 {{- end -}}
 
 {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
-*/}}
-{{- define "kibana.fullname" -}}
-{{- if .Values.fullnameOverride -}}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Create a default fully qualified elasticsearch name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "kibana.elasticsearch.fullname" -}}
-{{- if .Values.elasticsearch.fullnameOverride -}}
-{{- .Values.elasticsearch.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default "elasticsearch" .Values.elasticsearch.nameOverride -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "kibana.chart" -}}
@@ -112,7 +90,7 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{- define "kibana.elasticsearch.url" -}}
-{{- if not .Values.elasticsearch.useBundled -}}
+{{- if not .Values.elasticsearch.enabled -}}
 {{- if .Values.elasticsearch.external.hosts -}}
 {{- $totalHosts := len .Values.elasticsearch.external.hosts -}}
 {{- range $i, $host := .Values.elasticsearch.external.hosts -}}
@@ -129,7 +107,7 @@ Create chart name and version as used by the chart label.
 Set Elasticsearch Port.
 */}}
 {{- define "kibana.elasticsearch.port" -}}
-{{- if .Values.elasticsearch.useBundled -}}
+{{- if .Values.elasticsearch.enabled -}}
 {{- .Values.elasticsearch.coordinating.service.port -}}
 {{- else -}}
 {{- .Values.elasticsearch.external.port -}}
@@ -208,6 +186,14 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{/*
+Match labels
+*/}}
+{{- define "kibana.matchLabels" -}}
+app.kubernetes.io/name: {{ include "kibana.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+
+{{/*
 Return  the proper Storage Class
 */}}
 {{- define "kibana.storageClass" -}}
@@ -263,25 +249,25 @@ Compile all warnings into a single message, and call fail.
 
 {{/* Validate values of Kibana - must provide a ElasticSearch */}}
 {{- define "kibana.validateValues.noElastic" -}}
-{{- if and (not .Values.elasticsearch.useBundled) (not .Values.elasticsearch.external.hosts) (not .Values.elasticsearch.external.port) -}}
+{{- if and (not .Values.elasticsearch.enabled) (not .Values.elasticsearch.external.hosts) (not .Values.elasticsearch.external.port) -}}
 kibana: no-elasticsearch
     You did not specify an external Elasticsearch instance nor enabled the bundled
-    one. Please set either elasticsearch.useBundled=true or set elasticsearch.external.hosts and elasticsearch.external.port
+    one. Please set either elasticsearch.enabled=true or set elasticsearch.external.hosts and elasticsearch.external.port
 {{- end -}}
 {{- end -}}
 
 {{/* Validate values of Kibana - conflict with ElasticSearch */}}
 {{- define "kibana.validateValues.elasticConflict" -}}
-{{- if and (.Values.elasticsearch.useBundled) (.Values.elasticsearch.external.hosts) -}}
+{{- if and (.Values.elasticsearch.enabled) (.Values.elasticsearch.external.hosts) -}}
 kibana: conflict-elasticsearch
     You specified both the external Elasticsearch instance and the bundled one.
-    Please only set either elasticsearch.useBundled=true or elasticsearch.external.hosts
+    Please only set either elasticsearch.enabled=true or elasticsearch.external.hosts
 {{- end -}}
 {{- end -}}
 
 {{/* Validate values of Kibana - Missing external ES Setting */}}
 {{- define "kibana.validateValues.externalESSettings" -}}
-{{- if (not .Values.elasticsearch.useBundled) }}
+{{- if (not .Values.elasticsearch.enabled) }}
 {{- if and (not .Values.elasticsearch.external.hosts) .Values.elasticsearch.external.port }}
 kibana: missing-es-settings-host
     You specified the external Elasticsearch port but not the host. Please
