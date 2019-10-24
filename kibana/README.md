@@ -49,7 +49,7 @@ $ helm install bitnami/kibana --name my-release \
   --set elasticsearch.enabled=true
 ```
 
-These commands deploy kibana on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+These commands deploy kibana on the Kubernetes cluster in the default configuration. The [Parameters](#parameters) section lists the parameters that can be configured during installation.
 
 > **Tip**: List all releases using `helm list`
 
@@ -175,10 +175,6 @@ Bitnami will release a new chart updating its containers if a new version of the
 ### Production configuration
 
 This chart includes a `values-production.yaml` file where you can find some parameters oriented to production configuration in comparison to the regular `values.yaml`. You can use this file instead of the default one.
-
-```console
-$ helm install --name my-release -f ./values-production.yaml --set elasticsearch.enabled=false --set elasticsearch.external.hosts[0]=elasticsearch-host --set elasticsearch.external.port=9200 bitnami/kibana
-```
 
 - Disable bundled Elasticsearch
 
