@@ -1,3 +1,4 @@
+{{- if and .Values.elasticsearch.hosts .Values.elasticsearch.port -}}
 apiVersion: {{ template "kibana.deployment.apiVersion" . }}
 kind: Deployment
 metadata:
@@ -37,7 +38,7 @@ spec:
           mountPath: /bitnami/kibana
       {{- end }}
       {{- if .Values.initContainers }}
-      {{- tpl (toYaml .Values.initContainers) $ | nindent 6 }}
+      {{- tpl (toYaml .Values.initContainers) $ | nindent 8 }}
       {{- end }}
     {{- end }}
       containers:
@@ -127,7 +128,7 @@ spec:
           {{- tpl (toYaml .Values.extraVolumeMounts) $ | nindent 6 }}
           {{- end }}
       {{- if .Values.sidecars }}
-      {{- tpl (toYaml .Values.sidecars) $ | nindent 6 }}
+      {{- tpl (toYaml .Values.sidecars) $ | nindent 8 }}
       {{- end }}
       volumes:
         - name: kibana-data
@@ -184,3 +185,4 @@ spec:
       tolerations:
       {{- tpl (toYaml .Values.tolerations) $ | nindent 6 }}
       {{- end }}
+{{- end }}
