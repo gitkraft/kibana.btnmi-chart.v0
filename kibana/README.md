@@ -1,6 +1,6 @@
 # Kibana
 
-[Kibana](https://kibana.com/) is an open source, browser based analytics and search dashboard for Elasticsearch.
+[Kibana](https://www.elastic.co/kibana/) is an open source, browser based analytics and search dashboard for Elasticsearch.
 
 ## TL;DR
 
@@ -11,7 +11,7 @@ $ helm install my-release bitnami/kibana --set elasticsearch.hosts[0]=<Hostname 
 
 ## Introduction
 
-This chart bootstraps a [Kibana](https://github.com/bitnami/bitnami-docker-kibana) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps a [Kibana](https://github.com/bitnami/bitnami-docker-kibana) deployment on a [Kubernetes](https://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
 Bitnami charts can be used with [Kubeapps](https://kubeapps.com/) for deployment and management of Helm Charts in clusters.
 
@@ -322,7 +322,7 @@ As an alternative, you can use one of the preset configurations for pod affinity
 
 The [Bitnami Kibana](https://github.com/bitnami/bitnami-docker-kibana) image can persist data. If enabled, the persisted path is `/bitnami/kibana` by default.
 
-The chart mounts a [Persistent Volume](http://kubernetes.io/docs/user-guide/persistent-volumes/) at this location. The volume is created using dynamic volume provisioning.
+The chart mounts a [Persistent Volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) at this location. The volume is created using dynamic volume provisioning.
 
 ### Add extra volumes
 
